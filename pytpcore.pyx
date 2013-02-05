@@ -33,7 +33,6 @@ cpdef long tp_exp(
     @param x: the data ndarray
     @param tmp: a meaningless buffer shaped like x
     @param out: output goes into this buffer also shaped like x
-    @return: None
     """
     cdef long D = x.shape[0]
     cdef long N = x.shape[1]
@@ -67,7 +66,6 @@ cpdef long tp_reciprocal(
     """
     @param x: the data ndarray
     @param out: output goes into this buffer also shaped like x
-    @return: None
     """
     cdef long D = x.shape[0]
     cdef long N = x.shape[1]
