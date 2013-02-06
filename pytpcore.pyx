@@ -21,14 +21,17 @@ from libc.math cimport log, exp
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cpdef long tp_exp(
+#FIXME: what is the best way to control error checking for debugging?
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_exp(
         np.float64_t [:, :] x,
         np.float64_t [:, :] tmp,
         np.float64_t [:, :] out,
-        ) nogil:
+        #) nogil:
+        ):
     """
     @param x: the data ndarray
     @param tmp: a meaningless buffer shaped like x
@@ -56,13 +59,14 @@ cpdef long tp_exp(
 
     return 0
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cpdef long tp_reciprocal(
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_reciprocal(
         np.float64_t [:, :] x,
         np.float64_t [:, :] out,
-        ) nogil:
+        #) nogil:
+        ):
     """
     @param x: the data ndarray
     @param out: output goes into this buffer also shaped like x
@@ -85,3 +89,160 @@ cpdef long tp_reciprocal(
 
     return 0
 
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_mul(
+        np.float64_t [:, :] x,
+        np.float64_t [:, :] y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    All input ndarrays should have the same shape.
+    @param x: the first data ndarray
+    @param y: the second data ndarray
+    @param out: output goes into this buffer
+    """
+    cdef long D = x.shape[0]
+    cdef long N = x.shape[1]
+    cdef long n, d, i
+
+    for n in range(N):
+
+        # this is a truncated convolution
+        for d in range(D-1, -1, -1):
+            out[d, n] = 0
+            for i in range(d+1):
+                out[d, n] += x[i, n] * y[d-i, n]
+
+    return 0
+
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_mul_scalar(
+        np.float64_t [:, :] x,
+        double y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    This function is compatible with aliasing.
+    @param x: the input
+    @param y: the scalar
+    @param out: the output
+    """
+    cdef long D = x.shape[0]
+    cdef long N = x.shape[1]
+    cdef long n, d
+    for d in range(D):
+        for n in range(N):
+            out[d, n] = x[d, n] * y
+    return 0
+
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_amul_scalar(
+        np.float64_t [:, :] x,
+        double y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    This function is compatible with aliasing.
+    @param x: the input
+    @param y: the scalar
+    @param out: the output
+    """
+    cdef long D = x.shape[0]
+    cdef long N = x.shape[1]
+    cdef long n, d
+    for d in range(D):
+        for n in range(N):
+            out[d, n] += x[d, n] * y
+    return 0
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_add(
+        np.float64_t [:, :] x,
+        np.float64_t [:, :] y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    This function is compatible with aliasing.
+    @param x: the first input
+    @param y: the second input
+    @param out: the output
+    """
+    cdef long D = x.shape[0]
+    cdef long N = x.shape[1]
+    cdef long n, d
+    for d in range(D):
+        for n in range(N):
+            out[d, n] = x[d, n] + y[d, n]
+    return 0
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_add_scalar(
+        np.float64_t [:, :] x,
+        double y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    This function is compatible with aliasing.
+    @param x: the first input
+    @param y: the scalar
+    @param out: the output
+    """
+    cdef long D = x.shape[0]
+    cdef long N = x.shape[1]
+    cdef long n, d
+    for n in range(N):
+        out[0, n] = x[0, n] + y
+        for d in range(1, D):
+            out[d, n] = x[d, n]
+    return 0
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_accum_scalar(
+        double y,
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    """
+    @param y: the scalar
+    @param out: the output
+    """
+    cdef long N = out.shape[1]
+    cdef long n
+    for n in range(N):
+        out[0, n] += y
+    return 0
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#@cython.cdivision(True)
+def tp_zero(
+        np.float64_t [:, :] out,
+        #) nogil:
+        ):
+    cdef long D = out.shape[0]
+    cdef long N = out.shape[1]
+    cdef long n, d
+    for n in range(N):
+        for d in range(D):
+            out[d, n] = 0
+    return 0
